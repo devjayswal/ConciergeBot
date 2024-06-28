@@ -1,6 +1,8 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import path from 'path';
+import https from 'https';
+import fs from 'fs';
 import bodyParser from 'body-parser';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -203,7 +205,16 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.listen(port, () => {
+
+// HTTPS server setup
+const httpsOptions = {
+  key: fs.readFileSync(path.resolve(__dirname, 'server.key')),
+  cert: fs.readFileSync(path.resolve(__dirname, 'server.cert'))
+};
+
+const httpsServer = https.createServer(httpsOptions, app);
+
+httpsServer.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
 
