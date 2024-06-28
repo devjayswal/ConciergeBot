@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foodnest Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Foodnest Dashboard</h1>
+        <nav>
+            <button id="showUsers">Users</button>
+            <button id="showRestaurants">Restaurants</button>
+            <button id="showOrders">Order History</button>
+            <button id="addUser">Add User</button>
+            <button id="addRestaurant">Add Restaurant</button>
+            <button id="addOrder">Add Order</button>
+        </nav>
+        <div id="content"></div>
+        <div class="pagination">
+            <button id="prevPage">Previous</button>
+            <button id="nextPage">Next</button>
+        </div>
+        <form id="newUserForm" style="display:none;">
+            <h2>Add New User</h2>
+            <input type="text" name="name" placeholder="Name" required><br>
+            <input type="date" name="dob" placeholder="Date of Birth" required><br>
+            <input type="email" name="email" placeholder="Email" required><br>
+            <input type="text" id="phone_number" name="phone_number" required pattern="\+91\d{10}"><br>
+            <textarea name="addresses" placeholder="Addresses (JSON format)" required></textarea><br>
+            <input type="text" name="food_choices" placeholder="Food Choices" required><br>
+            <input type="text" name="food_preferences" placeholder="Food Preferences (comma separated)" required><br>
+            <input type="text" name="health_conditions" placeholder="Health Conditions (comma separated)" required><br>
+            <input type="text" name="allergies" placeholder="Allergies (comma separated)" required><br>
+            <input type="text" name="non_veg_days" placeholder="Non-Veg Days (comma separated)" required><br>
+            <button type="submit">Submit</button>
+        </form>
+        <form id="newRestaurantForm" style="display:none;">
+            <h2>Add New Restaurant</h2>
+            <input type="text" name="resto_name" placeholder="Restaurant Name" required><br>
+            <textarea name="menu" placeholder="Menu (JSON format)" required></textarea><br>
+            <input type="text" name="address" placeholder="Address" required><br>
+            <input type="text" name="google_pin" placeholder="Google PIN" required><br>
+            <textarea name="branches" placeholder="Branches (JSON format)" required></textarea><br>
+            <button type="submit">Submit</button>
+        </form>
+        <form id="newOrderForm" style="display:none;">
+            <h2>Add New Order History</h2>
+            <input type="text" name="order_id" placeholder="Order ID" required><br>
+            <textarea name="order_details" placeholder="Order Details (JSON format)" required></textarea><br>
+            <textarea name="dish_details" placeholder="Dish Details (JSON format)" required></textarea><br>
+            <textarea name="customer_details" placeholder="Customer Details (JSON format)" required></textarea><br>
+            <textarea name="delivery_address" placeholder="Delivery Address (JSON format)" required></textarea><br>
+            <textarea name="restaurant_details" placeholder="Restaurant Details (JSON format)" required></textarea><br>
+            <input type="number" name="distance_kms" placeholder="Distance in KMs" required><br>
+            <input type="text" name="upi_acknowledgement_id" placeholder="UPI Acknowledgement ID" required><br>
+            <input type="text" name="upi_status" placeholder="UPI Status" required><br>
+            <input type="datetime-local" name="timestamp" placeholder="Timestamp" required><br>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+    <script src="scripts.js"></script>
+</body>
+</html>
