@@ -3,6 +3,13 @@ const { Schema } = mongoose;
 
 
 
+const chatSchema = new mongoose.Schema({
+  message: String,
+  reply: String,
+  timestamp: { type: Date, default: Date.now },
+});
+
+
 const addressSchema = new Schema({
   address: {
     type: String,
@@ -244,5 +251,6 @@ const orderschema = new Schema({
 const user = mongoose.model("user", userschema);
 const restaurant = mongoose.model("restaurant", restaurantSchema);
 const Order = mongoose.model("Order", orderschema);
+const Chat = mongoose.model('Chat', chatSchema);
 
-export { user, restaurant, Order };
+export { user, restaurant, Order,Chat };

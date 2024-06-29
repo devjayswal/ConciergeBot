@@ -6,6 +6,7 @@ import fs from 'fs';
 import bodyParser from 'body-parser';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import MistralClient from '@mistralai/mistralai';
 import {
     create_user_info,
     check_user_status,
@@ -34,7 +35,8 @@ import {
 import { 
   user,
   restaurant,
-  Order
+  Order,
+  Chat
 } from "./Schema.js";
 import axios from 'axios';
 
@@ -60,7 +62,7 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // WhatsApp Business API configuration
-const whatsappAccessToken = "EAAQJUElvmugBO1cZAVZAQcqyKGlhmM4HPKgZC8hdrZClyJxTdsfyjHP5Uh3bu9mdPtzZBCcCYTkSg0xww5Fomp7ptcRWNUi45IaZBeT6b8HNTpxJoHOsjO11n8zGJqQDcOZB91BtKw4DnHUUe6A6ILgGajE4K2DvSc6g9XXXHrukA9rdFoPFWthOAB1GfvyfoHSmkzx2AMxBHmnbFZAULS0ZD";
+const whatsappAccessToken = "EAAQJUElvmugBO9SUsZA9EcTpxRvSSQxfn8ZAxIwmXZCr2o3v50RR2LpWCmdofLNTmAg9ZB5wFfY25Yp09VAcZBmLDIzuO86ipRUIZBf05zYxdZAWEnvgI6UAxGQy0OsnDQfUy0lUVmrdbkXDxzxNZBzsCSH6RwDdSJEmtOMeSvmxx0O8MqZAvoEubXZCh301ZCH5GFEl6WfKXTM0pFW71ssPBQZD";
 const whatsappPhoneNumberId = "325724163964641";
 
 // Webhook verification endpoint
@@ -115,30 +117,40 @@ app.post("/webhook", async (req, res) => {
 });
 
 async function processMessage(message) {
-  // Implement your chatbot logic here
-  // For now, just echo the incoming message
-  return `You said: ${message}`;
-}
-
-// Function to send a message using the WhatsApp Business API
-async function sendMessage(to, message) {
-  const url = `https://graph.facebook.com/v19.0/${whatsappPhoneNumberId}/messages`;
-  const data = {
-      messaging_product: "whatsapp",
-      to: to,
-      text: { body: message }
-  };
-  const headers = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${whatsappAccessToken}`
-  };
+  const apiKey = '7w6ow7caqk7qWr6CH9D5vs61uWj6vsIF';
+  const client = new MistralClient(apiKey);
 
   try {
-      await axios.post(url, data, { headers });
+    const chatResponse = await client.chat({
+      model: 'mistral-large-latest',
+      messages: [{ role: 'user', content: message }],
+    });
+    return chatResponse.choices[0].message.content;
   } catch (error) {
-      console.error("Error sending message:", error.response.data);
+    console.error("Error processing message with Mistral AI:", error);
+    return "Sorry, there was an error processing your message. Please try again later.";
   }
 }
+
+// // Function to send a message using the WhatsApp Business API
+// async function sendMessage(to, message) {
+//   const url = `https://graph.facebook.com/v19.0/${whatsappPhoneNumberId}/messages`;
+//   const data = {
+//       messaging_product: "whatsapp",
+//       to: to,
+//       text: { body: message }
+//   };
+//   const headers = {
+//       "Content-Type": "application/json",
+//       Authorization: `Bearer ${whatsappAccessToken}`
+//   };
+
+//   try {
+//       await axios.post(url, data, { headers });
+//   } catch (error) {
+//       console.error("Error sending message:", error.response.data);
+//   }
+// }
 
 // GET routes
 app.get("/api/users", async (req, res) => {
@@ -201,6 +213,29 @@ app.post("/api/orders", async (req, res) => {
   }
 });
 
+
+// Chat routes
+app.get("/chat", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "chat.html"));
+});
+
+// API route for chatbot messages
+app.post("/api/chat", async (req, res) => {
+  const { message } = req.body;
+  try {
+    const response = await processMessage(message);
+    const chat = new Chat({ message, reply: response, timestamp: new Date() });
+    await chat.save();
+    res.json({ message: response });
+  } catch (error) {
+    res.status(500).json({ message: "Error processing chat message", error });
+  }
+});
+
+
+
+
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
@@ -208,19 +243,11 @@ app.get("/", (req, res) => {
 
 
 
-const httpsServer = https.createServer({
-  key: fs.readFileSync(path.join(__dirname,'cert' ,'key.pem')),
-  cert: fs.readFileSync(path.join(__dirname, 'cert','cert.pem')),
-},
-app);
 
-httpsServer.listen(port, () => {
+app.listen(port, () => {
   console.log(`Server is running on https://localhost:${port}`);
 });
 
-// app.listen(port, () => {
-//   console.log(`Server is running on https://localhost:${port}`);
-// });
 
 /*
 import MistralClient from '@mistralai/mistralai';
