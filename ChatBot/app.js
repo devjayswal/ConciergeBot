@@ -208,19 +208,19 @@ app.get("/", (req, res) => {
 
 
 
-// const httpsServer = https.createServer({
-//   key: fs.readFileSync(path.join(__dirname,'cert' ,'key.pem')),
-//   cert: fs.readFileSync(path.join(__dirname, 'cert','cert.pem')),
-// },
-// app);
+const httpsServer = https.createServer({
+  key: fs.readFileSync(path.join(__dirname,'cert' ,'key.pem')),
+  cert: fs.readFileSync(path.join(__dirname, 'cert','cert.pem')),
+},
+app);
 
-// httpsServer.listen(port, () => {
-//   console.log(`Server is running on https://localhost:${port}`);
-// });
-
-app.listen(port, () => {
+httpsServer.listen(port, () => {
   console.log(`Server is running on https://localhost:${port}`);
 });
+
+// app.listen(port, () => {
+//   console.log(`Server is running on https://localhost:${port}`);
+// });
 
 /*
 import MistralClient from '@mistralai/mistralai';
