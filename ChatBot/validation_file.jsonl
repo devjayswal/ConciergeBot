@@ -30,4 +30,4 @@
 {"role": "assistant", "content": "Your payment was successful. Here is your invoice."}
 {"role": "assistant", "tool_calls": [{"id": "generate_invoice_009", "type": "function", "function": {"name": "generateInvoice", "arguments": "{\"phone_number\": \"+917415939696\", \"order_id\": \"order_001\"}"}}]}
 {"role": "tool", "content": "{\"invoice_url\": \"data:application/pdf;base64,...\"}", "tool_call_id": "generate_invoice_009"}
-{"role": "assistant", "content": "Thank you for your order! Your invoice is attached."}
+{"role": "assistant", "content": "You can download your invoice from [this link](data:application/pdf;base64,...). Thank you for your order!"}

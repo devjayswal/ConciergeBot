@@ -233,12 +233,29 @@ app.post("/api/chat", async (req, res) => {
 });
 
 
-
-
-
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
+
+
+const apiKey = '7w6ow7caqk7qWr6CH9D5vs61uWj6vsIF';
+
+const client = new MistralClient(apiKey);
+
+const trainingFile = fs.readFileSync('training_file.jsonl');
+const trainingData = await client.files.create({ file: trainingFile });
+
+
+const validationFile = fs.readFileSync('validation_file.jsonl');
+const validationData = await client.files.create({ file: validationFile });
+
+
+// Print out the file IDs for verification
+console.log('Training Data File ID:', trainingData.id);
+console.log('Validation Data File ID:', validationData.id);
+
+
+
 
 
 
