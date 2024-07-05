@@ -2,12 +2,14 @@ const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
 const bodyParser = require('body-parser');
+require('dotenv').config();
+
 
 const app = express();
 const port = 3000;
 
 // MongoDB connection
-const uri = "mongodb+srv://devjayswal:Dev%40958988@foodnest.tttt5kq.mongodb.net/FOODNEST?retryWrites=true&w=majority&appName=foodnest";
+const uri = process.env.MONGO_DB_URI;
 
 mongoose.connect(uri)
 .then(() => {
