@@ -5,6 +5,8 @@ import fs from "fs";
 import bodyParser from "body-parser";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import dotenv from 'dotenv';
+dotenv.config();
 import {
   FunctionDeclarationSchemaType,
   HarmBlockThreshold,
@@ -47,8 +49,7 @@ const app = express();
 const port = 4000;
 
 // MongoDB connection
-const uri =
-  "mongodb+srv://devjayswal:Dev%40958988@foodnest.tttt5kq.mongodb.net/FOODNEST?retryWrites=true&w=majority&appName=foodnest";
+const uri = process.env.MONGO_DB_URI;
 
 mongoose
   .connect(uri)
@@ -151,9 +152,9 @@ app.post("/api/orders", async (req, res) => {
   }
 });
 
-const project = "dulcet-equinox-428417-j7";
-const location = "us-central1";
-const textModel = "gemini-1.0-pro";
+const project = process.env.PROJECT_ID;
+const location = process.env.LOCATION;
+const textModel = process.env.MODEL;
 
 const vertexAI = new VertexAI({ project: project, location: location });
 
@@ -275,9 +276,9 @@ app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}/chat`);
 });
 
-// // WhatsApp Business API configuration
-// const whatsappAccessToken = "EAAQJUElvmugBO9SUsZA9EcTpxRvSSQxfn8ZAxIwmXZCr2o3v50RR2LpWCmdofLNTmAg9ZB5wFfY25Yp09VAcZBmLDIzuO86ipRUIZBf05zYxdZAWEnvgI6UAxGQy0OsnDQfUy0lUVmrdbkXDxzxNZBzsCSH6RwDdSJEmtOMeSvmxx0O8MqZAvoEubXZCh301ZCH5GFEl6WfKXTM0pFW71ssPBQZD";
-// const whatsappPhoneNumberId = "325724163964641";
+// // Whats"3App Business API configuration
+// const whatsappAccessToken = process.env.whatsappAccessToken;
+// const whatsappPhoneNumberId = process.env.whatsappPhoneNumberId;
 
 // // Webhook verification endpoint
 // app.get("/webhook", (req, res) => {
