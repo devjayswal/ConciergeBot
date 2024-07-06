@@ -21,6 +21,7 @@
     "fs": "^0.0.1-security",
     "https": "^1.0.0",
     "mongoose": "^8.4.4",
+    "qrcode": "^1.5.3",
     "qrcode-terminal": "^0.12.0"
   }
 }

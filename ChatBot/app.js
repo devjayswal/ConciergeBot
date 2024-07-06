@@ -1,47 +1,25 @@
 import express from "express";
 import mongoose from "mongoose";
 import path from "path";
-import fs from "fs";
-import bodyParser from "body-parser";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import dotenv from 'dotenv';
-dotenv.config();
+import dotenv from "dotenv";
 import {
   FunctionDeclarationSchemaType,
-  HarmBlockThreshold,
-  HarmCategory,
   VertexAI,
 } from "@google-cloud/vertexai";
-
 import {
-  create_user_info,
-  check_user_status,
   get_user_info,
   initiateOrder,
-  classifyOrderRequest,
   fetchDishes,
-  sortDishesByDistance,
-  displayDishes,
-  viewMoreDishes,
-  parseOrderSelection,
   updateTempOrder,
   confirmOrder,
-  editOrder,
-  recommendAdditionalDishes,
-  handleRecommendations,
-  generateOrderSummary,
-  confirmFinalOrder,
   generatePaymentQR,
-  trackPaymentStatus,
-  handlePaymentFailure,
-  generateInvoice,
-  handleUserLatency,
-  promptForCompletion,
 } from "./functions.js";
 import { user, restaurant, Order, Chat } from "./Schema.js";
 import axios from "axios";
 
+dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -62,6 +40,10 @@ mongoose
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+
+const temporaryOrders = {}; // Store temporary orders
+const chatHistories = {};
+const chatSessions = {};
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
@@ -152,98 +134,343 @@ app.post("/api/orders", async (req, res) => {
   }
 });
 
-const project = process.env.PROJECT_ID;
-const location = process.env.LOCATION;
-const textModel = process.env.MODEL;
-
-const vertexAI = new VertexAI({ project: project, location: location });
-
-const generativeModel = vertexAI.getGenerativeModel({
-  model: textModel,
-  systemInstruction:{
- parts:[
-      {text: "you are a helpful assistant (name era) of company FOODNESTS. you mission is to work as conciergebot.you need to ask user from their foody mood(like you want to eat some chinese , south indian ,korian etc) 'what he want to eat', according to their mood suggest them dishes, once user select dishes you need to  assist user so that he can take more dishes, after he confirm the order you need to  generate a random upi and ask them to  pay  money  to upi  and once user daid he paid , then you need to thank you to user. "},
-      {text: "you should be polite and helpful to user. you should be able to understand user mood and suggest them dishes according to their mood. you should be able to assist user to take more dishes. you should be able to generate a random upi and ask user to pay money to upi. you should be able to thank user once he paid money."},
-      {text: "image of a restaurant with a variety of dishes with its price and portion size. help user to pick and place the order and take payment. "},
-      {text:"provide dish and  all other information in structured format or list with numberical points with maximum 5 points. and ask user to he want more or not"},
- ],
-  },
-  safetySettings: [
-    {
-      category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-    },
-  ],
-  generationConfig: { maxOutputTokens: 256 },
-});
-
-const chatHistories = {};
-const chatSessions = {};
-const chat = generativeModel.startChat();
-async function processMessage(user, message) {
-  const userId = user.id;
-
-  if (!chatHistories[userId]) {
-    chatHistories[userId] = {
-      messages: [],
-      name: user.name
-    };
+//handleing function calls
+async function handleFunctionCall(name, parameters) {
+  switch (name) {
+    case "get_user_info":
+      return await get_user_info(parameters.phone_number);
+    case "initiateOrder":
+      return await initiateOrder(parameters.phone_number);
+    case "fetchDishes":
+      return await fetchDishes();
+    case "updateTempOrder":
+      return await updateTempOrder(
+        parameters.phone_number,
+        parameters.selectedDishes
+      );
+    case "confirmOrder":
+      return await confirmOrder(parameters.phone_number);
+    case "generatePaymentQR":
+      return await generatePaymentQR(parameters.order_id);
+    default:
+      throw new Error(`Unknown function call: ${name}`);
   }
-
-  // Add the new user message to the chat history
-  chatHistories[userId].messages.push({ role: 'user', content: message });
-
-  // Create a new chat instance
-
-  let result = await chat.sendMessageStream(message);
-
-  let aggregatedResponse = "";
-  for await (const item of result.stream) {
-    const chunk = item.candidates[0].content.parts[0].text;
-    console.log("Stream chunk: ", chunk);
-    aggregatedResponse += chunk;
-  }
-
-  console.log("Aggregated response: ", aggregatedResponse);
-
-  // Add the bot response to the chat history
-  chatHistories[userId].messages.push({ role: 'system', content: aggregatedResponse });
-
-  return aggregatedResponse;
 }
 
-// API route for chatbot messages
-app.post('/api/chat', async (req, res) => {
-  const { message, userName } = req.body;
+// Function Declarations
+const functionDeclarations = [
+  {
+    function_declarations: [
+      {
+        name: "get_user_info",
+        description:
+          "Get user information like name, email, addresses, food_choices, food_preference, allergies etc by phone number",
+        parameters: {
+          type: FunctionDeclarationSchemaType.OBJECT,
+          properties: {
+            phone_number: {
+              type: FunctionDeclarationSchemaType.STRING,
+              description: "Phone number of the user",
+            },
+          },
+          required: ["phone_number"],
+        },
+      },
+      {
+        name: "initiateOrder",
+        description:
+          "Initiate an order for a user to store temporary order details",
+        parameters: {
+          type: FunctionDeclarationSchemaType.OBJECT,
+          properties: {
+            phone_number: {
+              type: FunctionDeclarationSchemaType.STRING,
+              description: "Phone number of the user",
+            },
+          },
+          required: ["phone_number"],
+        },
+      },
+      {
+        name: "fetchDishes",
+        description: "Fetch all available dishes in all restaurants with dishname, pic , portion size and price",
+        parameters: {
+          type: FunctionDeclarationSchemaType.OBJECT,
+          properties: {
+            dishName:{
+              type:FunctionDeclarationSchemaType.STRING,
+              description:"Name of the dish"
+            },
+            price:{
+              type:FunctionDeclarationSchemaType.INTEGER,
+              description:"Price of the dish"
+            },
+            portionSize:{
+              type:FunctionDeclarationSchemaType.STRING,
+              description:"Portion size of the dish"
+            },
+            restaurantName:{
+              type:FunctionDeclarationSchemaType.STRING,
+              description:"Name of the restaurant"
+            },
+            pic:{
+              type:FunctionDeclarationSchemaType.STRING,
+              description:"Picture of the dish"
+            },
+            google_pin:{
+              type:FunctionDeclarationSchemaType.STRING,
+              description:"Google pin of the restaurant"
+            },
 
-  console.log(req.body);
-  console.log(message);
 
-  if (!message) {
-    return res.status(400).json({ error: 'No message provided' });
-  }
+          },
+        },
+      },
+      {
+        name: "updateTempOrder",
+        description:
+          "Update the temporary order with selected dishes and quantities",
+        parameters: {
+          type: FunctionDeclarationSchemaType.OBJECT,
+          properties: {
+            phone_number: {
+              type: FunctionDeclarationSchemaType.STRING,
+              description: "Phone number of the user",
+            },
+            selectedDishes: {
+              type: FunctionDeclarationSchemaType.ARRAY,
+              description: "Array of selected dishes with quantities",
+              items: {
+                type: FunctionDeclarationSchemaType.OBJECT,
+                properties: {
+                  dishName: {
+                    type: FunctionDeclarationSchemaType.STRING,
+                    description: "Name of the dish",
+                  },
+                  quantity: {
+                    type: FunctionDeclarationSchemaType.INTEGER,
+                    description: "Quantity of the dish",
+                  },
+                  price: {
+                    type: FunctionDeclarationSchemaType.INTEGER,
+                    description: "Price of the dish",
+                  },
+                },
+                required: ["dishName", "quantity", "price"],
+              },
+            },
+          },
+          required: ["phone_number", "selectedDishes"],
+        },
+      },
+      {
+        name: "confirmOrder",
+        description:
+          "Confirm the order with the user and store the order in the database with a new order_id",
+        parameters: {
+          type: FunctionDeclarationSchemaType.OBJECT,
+          properties: {
+            phone_number: {
+              type: FunctionDeclarationSchemaType.STRING,
+              description: "Phone number of the user",
+            },
+          },
+          required: ["phone_number"],
+        },
+      },
+      {
+        name: "generatePaymentQR",
+        description: "Generate a QR code for payment",
+        parameters: {
+          type: FunctionDeclarationSchemaType.OBJECT,
+          properties: {
+            order_id: {
+              type: FunctionDeclarationSchemaType.STRING,
+              description: "Order ID of the confirmed order",
+            },
+          },
+          required: ["order_id"],
+        },
+      },
+    ],
+  },
+];
 
-  // Define a temporary user for testing purposes
-  const tempUser = {
-    id: 'testUserId',
-    name: userName || 'Test User',
-  };
+//function Responses
+const functionResponseParts = [
+  {
+    functionResponse: {
+      name: "get_user_info",
+      response: {
+        userInfo: {
+          name: "Rahul Mehta",
+          DOB: "1992-11-30",
+          email: "rahul.mehta@example.com",
+          Addresses: [
+            { address: "789 Residency Road, Mumbai, Maharashtra", tag: "Home" },
+            {
+              address: "456 Corporate Avenue, Mumbai, Maharashtra",
+              tag: "Office",
+            },
+          ],
+          food_choices: "Non Veg",
+          food_preferences: ["Mughlai", "Chinese"],
+          health_conditions: ["none"],
+          allergies: ["none"],
+          non_veg_days: ["Tuesday", "Friday"],
+          phone_number: "+919589883539",
+        },
+      },
+    },
+  },
+  {
+    functionResponse: {
+      name: "initiateOrder",
+      response: { message: "Order initiated" },
+    },
+  },
+  {
+    functionResponse: {
+      name: "fetchDishes",
+      response: {
+        dishes: [
+          { dishName: "Pizza", portionSize: "Large", price: 500, quantity: 2 },
+        ],
+      },
+    },
+  },
+  {
+    functionResponse: {
+      name: "updateTempOrder",
+      response: { message: "Temporary order updated" },
+    },
+  },
+  {
+    functionResponse: {
+      name: "confirmOrder",
+      response: { order_id: "new_order_id" },
+    },
+  },
+  {
+    functionResponse: {
+      name: "generatePaymentQR",
+      response: { qrCode: "data:image/png;base64,iVBOR..." },
+    },
+  },
+];
+
+// Vertex AI configuration
+const PROJECT_id = process.env.PROJECT_id;
+const location = process.env.LOCATION;
+const model = process.env.MODEL;
+
+const vertexAI = new VertexAI({ project: PROJECT_id, location: location });
+
+const generativeModel = vertexAI.getGenerativeModel({
+  model: model,
+});
+
+const chat = generativeModel.startChat({
+  systemInstruction: {
+    parts: [
+      {
+        text: " You are a era concierge bot. your misson is to help user to order food from a restaurant. you must be polite  and helpful to user ",
+      },
+      {
+        text: "you first  response send by web server so that you can fetch user information and initiate order",
+      },
+      {
+        text: "you first response should be Hello i am era concierge AI of FOODNESTS. what you like today to order in impressive way",
+      },
+      {
+        text: "once order is initiated you need to fetch dishes from restaurant and update temporary order",
+      },
+      {
+        text: "once order is updated you need to confirm order and generate payment QR code. before confirm order you need to offer asstional things so that we can earn more profit",
+      },
+      {
+        text: "After confirm order you need to call generatePaymentQR function so that a QR code is generated for payment",
+      },
+      {
+        text: "you need to call funtion in sequence otherwise  there will occue error sequenceis get_user_info,initiateOrder,fetchDishes,updateTempOrder,confirmOrder,generatePaymentQR",
+      },
+    ],
+  },
+  tools: functionDeclarations,
+});
+
+const chatInput1 = "hello my phone number is +919589883539";
+
+const result1 = await chat.sendMessage(chatInput1);
+console.log("Response: ", JSON.stringify(result1.response.candidates[0].content.parts[0]));
+await result1.response;
+if (result1.response.candidates[0].content.functionCall) {
+  console.log("Function call detected");
+  console.log("Function call: ", result1.response.candidates[0].content.parts[0].functionCall);
+  const { name, args } =
+    result1.response.candidates[0].content.functionCall;
+  const functionResponse1 = await handleFunctionCall(name, args);
+  console.log("Function response: ", functionResponse1);
+  // Send a follow up message with a FunctionResponse
+  const result2 = await chat.sendMessage(functionResponse1);
+  const response2 = await result2.response;
+  console.log(response2.candidates[0].content.parts[0].text);
+}
+
+// Function to process incoming chat messages
+async function processMessage(phone_number, message) {
+  const userId = phone_number;
 
   try {
-    const response = await processMessage(tempUser, message);
-    res.json({ response });
-    console.log(response);
+    const result = await chat.sendMessage(message);
+    const resultResponse = result?.response;
+  
+    if (resultResponse && resultResponse.candidates[0]?.content?.parts[0]?.functionCall) {
+      console.log("Function call detected");
+      console.log("Function call: ", resultResponse.candidates[0].content.parts[0].functionCall);
+  
+      const { name, args } = resultResponse.candidates[0].content.parts[0].functionCall;
+      const functionResponse1 = await handleFunctionCall(name, args);
+  
+      const functionResult = await chat.sendMessage(functionResponse1);
+      const functionResultResponse = functionResult?.response;
+  
+      if (functionResultResponse) {
+        console.log("Function response: ", functionResultResponse.candidates[0].content.parts[0].text);
+        return functionResultResponse;
+      } else {
+        console.error("Unexpected functionResult response structure:", JSON.stringify(functionResult));
+      }
+    } else {
+      console.error("Unexpected response structure:", resultResponse);
+    }
+  
+    if (!chatHistories[userId]) {
+      chatHistories[userId] = { messages: [] };
+    }
+  
+    chatHistories[userId].messages.push({
+      role: "system",
+      content: resultResponse.candidates[0].content.parts[0].text,
+    });
+  
+    console.log("Response: ", resultResponse.candidates[0].content.parts[0].text);
+    return resultResponse;
+  
   } catch (error) {
-    console.error("Error processing chat message:", error);
-    res.status(500).json({ error: 'Error processing chat message' });
+    console.error("Error in processMessage:", error);
   }
-});
+  
+}
+
+
 
 // API route for chatbot messages
 // POST route to handle incoming chat messages
 app.post("/api/chat", async (req, res) => {
   const { message } = req.body;
-
+  const phone_number = "+919589883539";
+  const userId = phone_number;
   console.log(req.body);
   console.log(message);
 
@@ -251,16 +478,9 @@ app.post("/api/chat", async (req, res) => {
     return res.status(400).json({ error: "No message provided" });
   }
 
-  // Define a temporary user for testing purposes
-  const tempUser = {
-    id: "9589883539",
-    name: "Dev",
-  };
-
   try {
-    const response = await processMessage(tempUser, message);
+    const response = await processMessage(phone_number, message);
     res.json({ response });
-    console.log(response);
   } catch (error) {
     console.error("Error processing chat message:", error);
     res.status(500).json({ error: "Error processing chat message" });
@@ -268,13 +488,92 @@ app.post("/api/chat", async (req, res) => {
 });
 
 // Route to render the chat page
-app.get("/chat", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "chat.html"));
+app.get("/chat", async (req, res) => {
+  const phone_number = "+919589883539";
+  try {
+    // const initialResponse = await initializeChat(phone_number);
+    res.sendFile(path.join(__dirname, "public", "chat.html"));
+    // console.log({ response: initialResponse });
+  } catch (error) {
+    console.error("Error initializing chat:", error);
+    res.status(500).json({ error: "Error initializing chat" });
+  }
 });
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}/chat`);
 });
+
+
+
+// Function to initialize the chat and send the initial message
+// async function initializeChat(phone_number) {
+//   const userId = phone_number;
+//   if (!chatHistories[userId]) {
+//     chatHistories[userId] = { messages: [] };
+//   }
+//   const first_chat = `hello my phone number is ${phone_number}`;
+//   let aggregatedResponse = "";
+
+//   try {
+//     let result1st = await chat.sendMessageStream(first_chat);
+
+//     for await (const item of result1st.stream) {
+//       if (
+//         item.candidates &&
+//         item.candidates[0] &&
+//         item.candidates[0].content &&
+//         item.candidates[0].content.parts &&
+//         item.candidates[0].content.parts[0]
+//       ) {
+//         const chunk = item.candidates[0].content.parts[0].text;
+//         console.log("Stream chunk: ", chunk);
+//         aggregatedResponse += chunk;
+//       } else {
+//         console.error("Unexpected response structure:", JSON.stringify(item));
+//       }
+//     }
+//   } catch (error) {
+//     console.error("Error in initializeChat:", error);
+//     aggregatedResponse = "An error occurred during initialization.";
+//   }
+
+//   console.log("Aggregated response: ", aggregatedResponse);
+
+//   // Add the bot response to the chat history
+//   chatHistories[userId].messages.push({
+//     role: "system",
+//     content: aggregatedResponse,
+//   });
+
+//   return aggregatedResponse;
+// }
+// API route for chatbot messages
+// app.post('/api/chat', async (req, res) => {
+//   const { message, userName } = req.body;
+
+//   console.log(req.body);
+//   console.log(message);
+
+//   if (!message) {
+//     return res.status(400).json({ error: 'No message provided' });
+//   }
+
+//   // Define a temporary user for testing purposes
+//   const tempUser = {
+//     id: 'testUserId',
+//     name: userName || 'Test User',
+//   };
+
+//   try {
+//     const response = await processMessage(tempUser, message);
+//     res.json({ response });
+//     console.log(response);
+//   } catch (error) {
+//     console.error("Error processing chat message:", error);
+//     res.status(500).json({ error: 'Error processing chat message' });
+//   }
+// });
 
 // // Whats"3App Business API configuration
 // const whatsappAccessToken = process.env.whatsappAccessToken;
