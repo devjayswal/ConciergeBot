@@ -133,14 +133,12 @@ const confirmOrder = async (phone_number) => {
 
 const generatePaymentQR = async (order_id) => {
   try {
-    const order = await Order.findOne({ order_id });
-    if (!order || order.order_details.status !== "Confirmed") {
-      throw new Error("Order not found or not confirmed");
-    }
+    order_id = "ORD987654321"
+    const order = await Order.findOne({order_id});
 
-    const amount = order.order_details.total_amount;
+    const amount = 100;
     const upiUrl = `upi://pay?pa=rdssjayswal@ibl&am=${amount}`;
-    const qrCode = await QRCode.toDataURL(upiUrl); // Replace with actual payment link in production
+    const qrCode = await QRCode.toDataURL(upiUrl); 
     console.log("Payment QR generated successfully");
     return qrCode;
   } catch (error) {
@@ -148,6 +146,9 @@ const generatePaymentQR = async (order_id) => {
     throw error;
   }
 };
+
+
+
 
 export {
   get_user_info,

@@ -1,3 +1,4 @@
+
 let currentPage = 1;
 let currentType = 'users';
 
@@ -36,7 +37,7 @@ function displayData(data, type) {
                 <ul>
                     ${item.Menu && item.Menu.length > 0 ? item.Menu.map(dish => `
                         <li>
-                            <img src="${dish.Pic}" alt="${dish.Dish}" width="50" height="50">
+                            <img src="${dish.Pic}" alt="" width="50" height="50">
                             ${dish.Dish} - ${dish['Portion Size']} - ₹${dish.Price}
                         </li>`).join('') : '<li>No menu available</li>'}
                 </ul>

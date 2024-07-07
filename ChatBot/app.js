@@ -1,4 +1,4 @@
-import express from "express";
+import express, { response } from "express";
 import mongoose from "mongoose";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -134,24 +134,72 @@ app.post("/api/orders", async (req, res) => {
   }
 });
 
-//handleing function calls
+// Handling function calls
 async function handleFunctionCall(name, parameters) {
   switch (name) {
     case "get_user_info":
-      return await get_user_info(parameters.phone_number);
+      const user1 = await get_user_info(parameters.phone_number);
+      return [
+        {
+          functionResponse: {
+            name: "get_user_info",
+            response: { name: "get_user_info", content: user1 },
+          },
+        },
+      ];
     case "initiateOrder":
-      return await initiateOrder(parameters.phone_number);
+      const orderInitiation = await initiateOrder(parameters.phone_number);
+      return [
+        {
+          functionResponse: {
+            name: "initiateOrder",
+            response: { name: "initiateOrder", content: orderInitiation },
+          },
+        },
+      ];
     case "fetchDishes":
-      return await fetchDishes();
+      const dishes1 = await fetchDishes();
+      return [
+        {
+          functionResponse: {
+            name: "fetchDishes",
+            response: { name: "fetchDishes", content: dishes1 },
+          },
+        },
+      ];
     case "updateTempOrder":
-      return await updateTempOrder(
+      const updatedOrder = await updateTempOrder(
         parameters.phone_number,
         parameters.selectedDishes
       );
+      return [
+        {
+          functionResponse: {
+            name: "updateTempOrder",
+            response: { name: "updateTempOrder", content: updatedOrder },
+          },
+        },
+      ];
     case "confirmOrder":
-      return await confirmOrder(parameters.phone_number);
+      const order_id = await confirmOrder(parameters.phone_number);
+      return [
+        {
+          functionResponse: {
+            name: "confirmOrder",
+            response: { name: "confirmOrder", content: order_id },
+          },
+        },
+      ];
     case "generatePaymentQR":
-      return await generatePaymentQR(parameters.order_id);
+      const paymentQR = await generatePaymentQR(parameters.order_id);
+      return [
+        {
+          functionResponse: {
+            name: "generatePaymentQR",
+            response: { name: "generatePaymentQR", content: paymentQR },
+          },
+        },
+      ];
     default:
       throw new Error(`Unknown function call: ${name}`);
   }
@@ -193,37 +241,11 @@ const functionDeclarations = [
       },
       {
         name: "fetchDishes",
-        description: "Fetch all available dishes in all restaurants with dishname, pic , portion size and price",
+        description:
+          "Fetch all available dishes in all restaurants with dishname, pic , portion size and price and suggest user  them some of them according to there ask or interest /choice",
         parameters: {
           type: FunctionDeclarationSchemaType.OBJECT,
-          properties: {
-            dishName:{
-              type:FunctionDeclarationSchemaType.STRING,
-              description:"Name of the dish"
-            },
-            price:{
-              type:FunctionDeclarationSchemaType.INTEGER,
-              description:"Price of the dish"
-            },
-            portionSize:{
-              type:FunctionDeclarationSchemaType.STRING,
-              description:"Portion size of the dish"
-            },
-            restaurantName:{
-              type:FunctionDeclarationSchemaType.STRING,
-              description:"Name of the restaurant"
-            },
-            pic:{
-              type:FunctionDeclarationSchemaType.STRING,
-              description:"Picture of the dish"
-            },
-            google_pin:{
-              type:FunctionDeclarationSchemaType.STRING,
-              description:"Google pin of the restaurant"
-            },
-
-
-          },
+          properties: {},
         },
       },
       {
@@ -296,68 +318,7 @@ const functionDeclarations = [
   },
 ];
 
-//function Responses
-const functionResponseParts = [
-  {
-    functionResponse: {
-      name: "get_user_info",
-      response: {
-        userInfo: {
-          name: "Rahul Mehta",
-          DOB: "1992-11-30",
-          email: "rahul.mehta@example.com",
-          Addresses: [
-            { address: "789 Residency Road, Mumbai, Maharashtra", tag: "Home" },
-            {
-              address: "456 Corporate Avenue, Mumbai, Maharashtra",
-              tag: "Office",
-            },
-          ],
-          food_choices: "Non Veg",
-          food_preferences: ["Mughlai", "Chinese"],
-          health_conditions: ["none"],
-          allergies: ["none"],
-          non_veg_days: ["Tuesday", "Friday"],
-          phone_number: "+919589883539",
-        },
-      },
-    },
-  },
-  {
-    functionResponse: {
-      name: "initiateOrder",
-      response: { message: "Order initiated" },
-    },
-  },
-  {
-    functionResponse: {
-      name: "fetchDishes",
-      response: {
-        dishes: [
-          { dishName: "Pizza", portionSize: "Large", price: 500, quantity: 2 },
-        ],
-      },
-    },
-  },
-  {
-    functionResponse: {
-      name: "updateTempOrder",
-      response: { message: "Temporary order updated" },
-    },
-  },
-  {
-    functionResponse: {
-      name: "confirmOrder",
-      response: { order_id: "new_order_id" },
-    },
-  },
-  {
-    functionResponse: {
-      name: "generatePaymentQR",
-      response: { qrCode: "data:image/png;base64,iVBOR..." },
-    },
-  },
-];
+
 
 // Vertex AI configuration
 const PROJECT_id = process.env.PROJECT_id;
@@ -374,25 +335,7 @@ const chat = generativeModel.startChat({
   systemInstruction: {
     parts: [
       {
-        text: " You are a era concierge bot. your misson is to help user to order food from a restaurant. you must be polite  and helpful to user ",
-      },
-      {
-        text: "you first  response send by web server so that you can fetch user information and initiate order",
-      },
-      {
-        text: "you first response should be Hello i am era concierge AI of FOODNESTS. what you like today to order in impressive way",
-      },
-      {
-        text: "once order is initiated you need to fetch dishes from restaurant and update temporary order",
-      },
-      {
-        text: "once order is updated you need to confirm order and generate payment QR code. before confirm order you need to offer asstional things so that we can earn more profit",
-      },
-      {
-        text: "After confirm order you need to call generatePaymentQR function so that a QR code is generated for payment",
-      },
-      {
-        text: "you need to call funtion in sequence otherwise  there will occue error sequenceis get_user_info,initiateOrder,fetchDishes,updateTempOrder,confirmOrder,generatePaymentQR",
+        text: "You are an Era Concierge Bot. Your mission is to help the user order food from a restaurant.you can use hindi , english and hinglish as per the your chat request.fetch user details and iniciate order at start.fetch all dishes using the fetchDishes function  before interacation and suggest some dishes based on the user information.  Be polite and helpful. You have function-calling capabilities and must call appropriate functions in sequence to complete the order. Your first response, sent by the web server, should include a hello message and the user's phone number. Use the get_user_info function to fetch user information. Your first response should be: 'Hello, I am the Era Concierge AI of FOODNESTS. What would you like to order today?' The function call sequence is: get_user_info, initiateOrder, updateTempOrder, confirmOrder, generatePaymentQR. Once the user makes their choice, update the temporary order using the updateTempOrder function. Then, confirm the order using the confirmOrder function and provide the user with an order_id. Finally, to make a payment, pass the order_id to the generatePaymentQR function to get a QR code for payment.",
       },
     ],
   },
@@ -402,13 +345,18 @@ const chat = generativeModel.startChat({
 const chatInput1 = "hello my phone number is +919589883539";
 
 const result1 = await chat.sendMessage(chatInput1);
-console.log("Response: ", JSON.stringify(result1.response.candidates[0].content.parts[0]));
+console.log(
+  "Response: ",
+  JSON.stringify(result1.response.candidates[0].content.parts[0])
+);
 await result1.response;
 if (result1.response.candidates[0].content.functionCall) {
   console.log("Function call detected");
-  console.log("Function call: ", result1.response.candidates[0].content.parts[0].functionCall);
-  const { name, args } =
-    result1.response.candidates[0].content.functionCall;
+  console.log(
+    "Function call: ",
+    result1.response.candidates[0].content.parts[0].functionCall
+  );
+  const { name, args } = result1.response.candidates[0].content.functionCall;
   const functionResponse1 = await handleFunctionCall(name, args);
   console.log("Function response: ", functionResponse1);
   // Send a follow up message with a FunctionResponse
@@ -424,46 +372,60 @@ async function processMessage(phone_number, message) {
   try {
     const result = await chat.sendMessage(message);
     const resultResponse = result?.response;
-  
-    if (resultResponse && resultResponse.candidates[0]?.content?.parts[0]?.functionCall) {
+
+    if (
+      resultResponse &&
+      resultResponse.candidates[0]?.content?.parts[0]?.functionCall
+    ) {
       console.log("Function call detected");
-      console.log("Function call: ", resultResponse.candidates[0].content.parts[0].functionCall);
-  
-      const { name, args } = resultResponse.candidates[0].content.parts[0].functionCall;
+      console.log(
+        "Function call: ",
+        resultResponse.candidates[0].content.parts[0].functionCall
+      );
+
+      const { name, args } =
+        resultResponse.candidates[0].content.parts[0].functionCall;
       const functionResponse1 = await handleFunctionCall(name, args);
-  
+
+      console.log("Function call response: ", functionResponse1);
+
       const functionResult = await chat.sendMessage(functionResponse1);
       const functionResultResponse = functionResult?.response;
-  
+
       if (functionResultResponse) {
-        console.log("Function response: ", functionResultResponse.candidates[0].content.parts[0].text);
-        return functionResultResponse;
+        console.log(
+          "AI response after function response: ",
+          functionResultResponse.candidates[0].content.parts[0].text
+        );
+        return functionResultResponse.candidates[0].content.parts[0].text;
       } else {
-        console.error("Unexpected functionResult response structure:", JSON.stringify(functionResult));
+        console.error(
+          "Unexpected functionResult response structure:",
+          JSON.stringify(functionResult)
+        );
       }
     } else {
       console.error("Unexpected response structure:", resultResponse);
     }
-  
+
     if (!chatHistories[userId]) {
       chatHistories[userId] = { messages: [] };
     }
-  
+
     chatHistories[userId].messages.push({
       role: "system",
       content: resultResponse.candidates[0].content.parts[0].text,
     });
-  
-    console.log("Response: ", resultResponse.candidates[0].content.parts[0].text);
+
+    console.log(
+      "Response: ",
+      resultResponse.candidates[0].content.parts[0].text
+    );
     return resultResponse;
-  
   } catch (error) {
     console.error("Error in processMessage:", error);
   }
-  
 }
-
-
 
 // API route for chatbot messages
 // POST route to handle incoming chat messages
@@ -503,8 +465,6 @@ app.get("/chat", async (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}/chat`);
 });
-
-
 
 // Function to initialize the chat and send the initial message
 // async function initializeChat(phone_number) {
@@ -648,3 +608,87 @@ app.listen(port, () => {
 //       console.error("Error sending message:", error.response.data);
 //   }
 // }
+// (async () => {
+//   try {
+//     console.log(await get_user_info('+919589883539'));
+
+//     await initiateOrder('+919589883539');
+//     console.log('Order initiated');
+
+//     await fetchDishes();
+
+//     updateTempOrder('+919589883539', [
+//       { dishName: 'Pizza', portionSize: 'Large', price: 500, quantity: 2 },
+//     ]);
+
+//     const order_id = await confirmOrder('+919589883539');
+//     console.log(order_id);
+
+//     console.log(await generatePaymentQR(order_id));
+//   } catch (error) {
+//     console.error('Error in test functions:', error);
+//   }
+// })();
+
+//function Responses
+// const functionResponseParts = [
+//   {
+//     functionResponse: {
+//       name: "get_user_info",
+//       response: {
+//         userInfo: {
+//           name: "Rahul Mehta",
+//           DOB: "1992-11-30",
+//           email: "rahul.mehta@example.com",
+//           Addresses: [
+//             { address: "789 Residency Road, Mumbai, Maharashtra", tag: "Home" },
+//             {
+//               address: "456 Corporate Avenue, Mumbai, Maharashtra",
+//               tag: "Office",
+//             },
+//           ],
+//           food_choices: "Non Veg",
+//           food_preferences: ["Mughlai", "Chinese"],
+//           health_conditions: ["none"],
+//           allergies: ["none"],
+//           non_veg_days: ["Tuesday", "Friday"],
+//           phone_number: "+919589883539",
+//         },
+//       },
+//     },
+//   },
+//   {
+//     functionResponse: {
+//       name: "initiateOrder",
+//       response: { message: "Order initiated" },
+//     },
+//   },
+//   {
+//     functionResponse: {
+//       name: "fetchDishes",
+//       response: {
+//         dishes: [
+//           { dishName: "Pizza", portionSize: "Large", price: 500, quantity: 2 },
+//         ],
+//       },
+//     },
+//   },
+//   {
+//     functionResponse: {
+//       name: "updateTempOrder",
+//       response: { message: "Temporary order updated" },
+//     },
+//   },
+//   {
+//     functionResponse: {
+//       name: "confirmOrder",
+//       response: { order_id: "new_order_id" },
+//     },
+//   },
+//   {
+//     functionResponse: {
+//       name: "generatePaymentQR",
+//       response: { qrCode: "data:image/png;base64,iVBOR..." },
+//     },
+//   },
+// ];
