@@ -63,16 +63,13 @@ app.get("/api/restaurants", async (req, res) => {
 
 app.get("/api/orders", async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = 10;
-    const orders = await Order.find()
-      .skip((page - 1) * limit)
-      .limit(limit);
+    const orders = await Order.find();
     res.json(orders);
   } catch (error) {
     res.status(500).send(error);
   }
 });
+
 
 // POST routes
 app.post("/api/users", async (req, res) => {

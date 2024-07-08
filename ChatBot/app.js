@@ -335,8 +335,15 @@ const chat = generativeModel.startChat({
   systemInstruction: {
     parts: [
       {
-        text: "You are an Era Concierge Bot. Your mission is to help the user order food from a restaurant.you can use hindi , english and hinglish as per the your chat request.fetch user details and iniciate order at start.fetch all dishes using the fetchDishes function  before interacation and suggest some dishes based on the user information.  Be polite and helpful. You have function-calling capabilities and must call appropriate functions in sequence to complete the order. Your first response, sent by the web server, should include a hello message and the user's phone number. Use the get_user_info function to fetch user information. Your first response should be: 'Hello, I am the Era Concierge AI of FOODNESTS. What would you like to order today?' The function call sequence is: get_user_info, initiateOrder, updateTempOrder, confirmOrder, generatePaymentQR. Once the user makes their choice, update the temporary order using the updateTempOrder function. Then, confirm the order using the confirmOrder function and provide the user with an order_id. Finally, to make a payment, pass the order_id to the generatePaymentQR function to get a QR code for payment.",
+        text: "You are an Era Concierge AI, Your mission is to help the user order food from a restaurant, you can use hindi,english and hinglish as per the your user request, run get_user_info in first  response.",
       },
+      {
+        text:"Your first chat send by the web server, should include a hello message and the user's phone number, you need to run get_user_info and fetch dishes before reply to user, so that you can use this information for dish suggestion(which is avilabe in fetchDishes function),show only 10 dishes at a time if user did not like it show rest 10 more and repeat it"
+      },
+      {
+        text:"You have function-calling capabilities and must call appropriate functions in sequence to complete the order, The function call sequence is:  initiateOrder, updateTempOrder, confirmOrder, generatePaymentQR."
+      },
+      { text:"first initiatieOrder then update the temporary order using the updateTempOrder function. Then, confirm the order using the confirmOrder function and provide the user an order_id. Finally, to make a payment, pass the order_id to the generatePaymentQR function to get a QR code for payment."}
     ],
   },
   tools: functionDeclarations,
@@ -629,66 +636,3 @@ app.listen(port, () => {
 //     console.error('Error in test functions:', error);
 //   }
 // })();
-
-//function Responses
-// const functionResponseParts = [
-//   {
-//     functionResponse: {
-//       name: "get_user_info",
-//       response: {
-//         userInfo: {
-//           name: "Rahul Mehta",
-//           DOB: "1992-11-30",
-//           email: "rahul.mehta@example.com",
-//           Addresses: [
-//             { address: "789 Residency Road, Mumbai, Maharashtra", tag: "Home" },
-//             {
-//               address: "456 Corporate Avenue, Mumbai, Maharashtra",
-//               tag: "Office",
-//             },
-//           ],
-//           food_choices: "Non Veg",
-//           food_preferences: ["Mughlai", "Chinese"],
-//           health_conditions: ["none"],
-//           allergies: ["none"],
-//           non_veg_days: ["Tuesday", "Friday"],
-//           phone_number: "+919589883539",
-//         },
-//       },
-//     },
-//   },
-//   {
-//     functionResponse: {
-//       name: "initiateOrder",
-//       response: { message: "Order initiated" },
-//     },
-//   },
-//   {
-//     functionResponse: {
-//       name: "fetchDishes",
-//       response: {
-//         dishes: [
-//           { dishName: "Pizza", portionSize: "Large", price: 500, quantity: 2 },
-//         ],
-//       },
-//     },
-//   },
-//   {
-//     functionResponse: {
-//       name: "updateTempOrder",
-//       response: { message: "Temporary order updated" },
-//     },
-//   },
-//   {
-//     functionResponse: {
-//       name: "confirmOrder",
-//       response: { order_id: "new_order_id" },
-//     },
-//   },
-//   {
-//     functionResponse: {
-//       name: "generatePaymentQR",
-//       response: { qrCode: "data:image/png;base64,iVBOR..." },
-//     },
-//   },
-// ];

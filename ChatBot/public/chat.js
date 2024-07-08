@@ -40,20 +40,20 @@ async function sendMessage() {
             if (firstCandidate.content && firstCandidate.content.parts && firstCandidate.content.parts.length > 0) {
                 const firstPart = firstCandidate.content.parts[0];
                 if (firstPart.text) {
-                    let processedString = processInput(firstPart.text);
-                    appendMessage('AI', processedString, 'ai');
+                    // let processedString = processInput(firstPart.text);
+                    appendMessage('AI', firstPart.text, 'ai');
                 } else {
-                    let processedString = processInput(firstPart);
-                    appendMessage('AI', JSON.stringify(processedString), 'ai');
+                    // let processedString = processInput(firstPart);
+                    appendMessage('AI', JSON.stringify(firstPart), 'ai');
                 }
             } else {
-                let processedString = processInput(firstCandidate);
-                appendMessage('AI', JSON.stringify(processedString), 'ai');
+                // let processedString = processInput(firstCandidate);
+                appendMessage('AI', JSON.stringify(firstCandidate), 'ai');
             }
         } else {
-            let processedString = processInput(aiResponse);
+            // let processedString = processInput(aiResponse);
             // If aiResponse is a string, append it directly
-            appendMessage('AI', processedString, 'ai');
+            appendMessage('AI', aiResponse, 'ai');
         }
     } catch (error) {
         console.error('Error sending message:', error);
@@ -71,32 +71,32 @@ function appendMessage(sender, message, type) {
 }
 
 
-function processInput(input) {
-    // Regular expression to find content between triple backticks
-    const regex = /```(.*?)```/g;
-    let match;
+// function processInput(input) {
+//     // Regular expression to find content between triple backticks
+//     const regex = /```(.*?)```/g;
+//     let match;
 
-    // Loop through all matches
-    while ((match = regex.exec(input)) !== null) {
-        const content = match[1];
+//     // Loop through all matches
+//     while ((match = regex.exec(input)) !== null) {
+//         const content = match[1];
 
-        // Check if the content starts with data:image/png
-        if (content.startsWith('data:image/png')) {
-            // Create a new img element
-            const img = document.createElement('img');
-            img.src = content;
-            img.alt = 'Payment QR Code';
+//         // Check if the content starts with data:image/png
+//         if (content.startsWith('data:image/png')) {
+//             // Create a new img element
+//             const img = document.createElement('img');
+//             img.src = content;
+//             img.alt = 'Payment QR Code';
 
-            // Append the img element to the div with id 'chat-history'
-            const chatHistoryDiv = document.getElementById('chat-history');
-            chatHistoryDiv.appendChild(img);
-        }
+//             // Append the img element to the div with id 'chat-history'
+//             const chatHistoryDiv = document.getElementById('chat-history');
+//             chatHistoryDiv.appendChild(img);
+//         }
 
-        // Remove the triple backticks and their content from the input string
-        input = input.replace(match[0], '');
-    }
+//         // Remove the triple backticks and their content from the input string
+//         input = input.replace(match[0], '');
+//     }
 
-    // Return the processed input string
-    return input;
-}
+//     // Return the processed input string
+//     return input;
+// }
 
