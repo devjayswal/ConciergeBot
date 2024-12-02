@@ -1,0 +1,8 @@
+# Ignore node_modules for ChatBot
+ChatBot/node_modules/
+
+# Ignore node_modules for Panel
+Panel/node_modules/
+
+ChatBot/.env
+Panel/.env

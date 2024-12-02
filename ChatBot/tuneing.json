@@ -1,0 +1,226 @@
+{
+    "messages": [
+        {
+            "role": "system",
+            "content": "You are a helpful assistant for a restaurant ordering system, capable of handling user inquiries, order placements, and payment processing."
+        },
+        {
+            "role": "user",
+            "content": "Hello, I want to place an order."
+        },
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "check_user_001",
+                    "type": "function",
+                    "function": {
+                        "name": "check_user_status",
+                        "arguments": "{\"phone_number\": \"+917415939696\"}"
+                    }
+                }
+            ]
+        },
+        {
+            "role": "tool",
+            "content": "{\"exists\": true, \"user\": {\"name\": \"John Doe\", \"DOB\": \"1990-01-01\", \"email\": \"john@example.com\", \"phone_number\": \"+917415939696\", \"Addresses\": [\"123 Main St\"], \"food_choices\": \"Veg\", \"food_preferences\": [\"Chinese\"], \"health_conditions\": [\"Diabetes\"], \"allergies\": [\"Peanuts\"], \"non_veg_days\": [\"Friday\"]}}",
+            "tool_call_id": "check_user_001"
+        },
+        {
+            "role": "assistant",
+            "content": "Welcome back, John! What would you like to order today?"
+        },
+        {
+            "role": "user",
+            "content": "I want something spicy in Chinese that's not heavy."
+        },
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "fetch_dishes_002",
+                    "type": "function",
+                    "function": {
+                        "name": "fetchDishes",
+                        "arguments": "{\"keywords\": [\"spicy\", \"Chinese\", \"light\"], \"userPin\": \"123456\"}"
+                    }
+                }
+            ]
+        },
+        {
+            "role": "tool",
+            "content": "{\"dishes\": [{\"dishName\": \"Spicy Sichuan Noodles\", \"portionSize\": \"Half\", \"price\": 150, \"pic\": \"pic_url\", \"restaurantId\": \"resto_001\", \"distance\": 5}, {\"dishName\": \"Chili Paneer\", \"portionSize\": \"Full\", \"price\": 200, \"pic\": \"pic_url\", \"restaurantId\": \"resto_002\", \"distance\": 6}]}",
+            "tool_call_id": "fetch_dishes_002"
+        },
+        {
+            "role": "assistant",
+            "content": "Here are some options:\n1. Spicy Sichuan Noodles (Half) - ₹150\n2. Chili Paneer (Full) - ₹200\nPlease reply with the dish number and quantity."
+        },
+        {
+            "role": "user",
+            "content": "I'll take 2 half Spicy Sichuan Noodles and 1 full Chili Paneer."
+        },
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "parse_selection_003",
+                    "type": "function",
+                    "function": {
+                        "name": "parseOrderSelection",
+                        "arguments": "{\"userResponse\": \"2 half Spicy Sichuan Noodles and 1 full Chili Paneer\"}"
+                    }
+                }
+            ]
+        },
+        {
+            "role": "tool",
+            "content": "{\"selectedDishes\": [{\"dishName\": \"Spicy Sichuan Noodles\", \"quantity\": 2, \"price\": 150, \"portionSize\": \"Half\"}, {\"dishName\": \"Chili Paneer\", \"quantity\": 1, \"price\": 200, \"portionSize\": \"Full\"}]}",
+            "tool_call_id": "parse_selection_003"
+        },
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "update_temp_order_004",
+                    "type": "function",
+                    "function": {
+                        "name": "updateTempOrder",
+                        "arguments": "{\"phone_number\": \"+917415939696\", \"selectedDishes\": [{\"dishName\": \"Spicy Sichuan Noodles\", \"quantity\": 2, \"price\": 150, \"portionSize\": \"Half\"}, {\"dishName\": \"Chili Paneer\", \"quantity\": 1, \"price\": 200, \"portionSize\": \"Full\"}]}"
+                    }
+                }
+            ]
+        },
+        {
+            "role": "tool",
+            "content": "{\"message\": \"Temporary order updated successfully.\"}",
+            "tool_call_id": "update_temp_order_004"
+        },
+        {
+            "role": "assistant",
+            "content": "Your order has been updated. Would you like to add anything else?"
+        },
+        {
+            "role": "user",
+            "content": "No, that's all."
+        },
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "generate_order_summary_005",
+                    "type": "function",
+                    "function": {
+                        "name": "generateOrderSummary",
+                        "arguments": "{\"phone_number\": \"+917415939696\"}"
+                    }
+                }
+            ]
+        },
+        {
+            "role": "tool",
+            "content": "{\"summary\": {\"name\": \"John Doe\", \"phone_number\": \"+917415939696\", \"address\": \"123 Main St\", \"dishes\": [{\"dishName\": \"Spicy Sichuan Noodles\", \"quantity\": 2, \"price\": 150, \"portionSize\": \"Half\"}, {\"dishName\": \"Chili Paneer\", \"quantity\": 1, \"price\": 200, \"portionSize\": \"Full\"}], \"totalAmount\": 500}}",
+            "tool_call_id": "generate_order_summary_005"
+        },
+        {
+            "role": "assistant",
+            "content": "Here is your order summary:\n- Spicy Sichuan Noodles (Half) x2: ₹300\n- Chili Paneer (Full) x1: ₹200\nTotal: ₹500\nDo you want to confirm the order or edit it?"
+        },
+        {
+            "role": "user",
+            "content": "Confirm the order."
+        },
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "confirm_order_006",
+                    "type": "function",
+                    "function": {
+                        "name": "confirmOrder",
+                        "arguments": "{\"phone_number\": \"+917415939696\"}"
+                    }
+                }
+            ]
+        },
+        {
+            "role": "tool",
+            "content": "{\"order_id\": \"order_001\", \"status\": \"Confirmed\"}",
+            "tool_call_id": "confirm_order_006"
+        },
+        {
+            "role": "assistant",
+            "content": "Your order has been confirmed. Please scan the QR code to complete the payment."
+        },
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "generate_payment_qr_007",
+                    "type": "function",
+                    "function": {
+                        "name": "generatePaymentQR",
+                        "arguments": "{\"phone_number\": \"+917415939696\", \"order_id\": \"order_001\"}"
+                    }
+                }
+            ]
+        },
+        {
+            "role": "tool",
+            "content": "{\"qr_code_url\": \"data:image/png;base64,...\"}",
+            "tool_call_id": "generate_payment_qr_007"
+        },
+        {
+            "role": "assistant",
+            "content": "Please scan this QR code to make the payment."
+        },
+        {
+            "role": "user",
+            "content": "I have made the payment."
+        },
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "track_payment_status_008",
+                    "type": "function",
+                    "function": {
+                        "name": "trackPaymentStatus",
+                        "arguments": "{\"payment_id\": \"payment_001\"}"
+                    }
+                }
+            ]
+        },
+        {
+            "role": "tool",
+            "content": "{\"status\": \"Completed\"}",
+            "tool_call_id": "track_payment_status_008"
+        },
+        {
+            "role": "assistant",
+            "content": "Your payment was successful. Here is your invoice."
+        },
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "generate_invoice_009",
+                    "type": "function",
+                    "function": {
+                        "name": "generateInvoice",
+                        "arguments": "{\"phone_number\": \"+917415939696\", \"order_id\": \"order_001\"}"
+                    }
+                }
+            ]
+        },
+        {
+            "role": "tool",
+            "content": "{\"invoice_url\": \"data:application/pdf;base64,...\"}",
+            "tool_call_id": "generate_invoice_009"
+        },
+        {
+            "role": "assistant",
+            "content": "You can download your invoice from [this link](data:application/pdf;base64,...). Thank you for your order!"
+        }
+    ]
+}
